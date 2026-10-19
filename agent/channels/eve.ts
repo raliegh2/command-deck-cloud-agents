@@ -1,15 +1,13 @@
 import { eveChannel } from "eve/channels/eve";
-import { localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { ForbiddenError, type AuthFn } from "eve/channels/auth";
+import { authorized, aiEnabled } from '../lib/policy';
+
+const ownerAuth: AuthFn<Request> = request => {
+  if(!authorized(request,process.env.OPS_ADMIN_TOKEN)) return null;
+  if(!aiEnabled()) throw new ForbiddenError({message:'Paid AI execution is disabled by the owner.'});
+  return {authenticator:'owner-token',principalId:'operator',principalType:'user',attributes:{}};
+};
 
 export default eveChannel({
-  auth: [
-    // Lets the eve TUI and your Vercel deployments reach the deployed agent.
-    vercelOidc(),
-    // Open on localhost for `eve dev` and the REPL; ignored in production.
-    localDev(),
-    // This placeholder will not allow browser requests in production.
-    // Replace it with your app's auth provider, like Auth.js or Clerk,
-    // or use none() for a public demo.
-    placeholderAuth(),
-  ],
+  auth: [ownerAuth],
 });

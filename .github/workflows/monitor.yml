@@ -1,0 +1,30 @@
+name: Cloud monitoring trigger
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: production-monitor
+  cancel-in-progress: false
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Invoke authenticated monitor
+        env:
+          CLOUD_OPS_URL: ${{ vars.CLOUD_OPS_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        shell: bash
+        run: |
+          if [ -z "$CLOUD_OPS_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo 'Monitoring trigger is not configured; no request sent.'
+            exit 0
+          fi
+          case "$CLOUD_OPS_URL" in https://*.vercel.app) ;; *) echo 'Unexpected monitoring host'; exit 1;; esac
+          curl --fail --silent --show-error --max-time 75 \
+            --request POST \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "$CLOUD_OPS_URL/ops/monitor"

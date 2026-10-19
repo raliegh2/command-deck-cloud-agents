@@ -5,3 +5,6 @@ node_modules
 .output
 .nitro
 dist
+.private
+.vercel
+audit-production.json
