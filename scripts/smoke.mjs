@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
+// Load the generated local handoff after any pulled (redacted) production values.
+try { const {readFile}=await import('node:fs/promises');Object.assign(process.env,JSON.parse(await readFile(new URL('../.private/deployment.json',import.meta.url),'utf8'))); } catch {}
 const base=process.argv[2]??'http://127.0.0.1:3000';
 const token=process.env.OPS_ADMIN_TOKEN;if(!token) throw new Error('Owner credential is not configured');
 const call=(route,options={})=>fetch(new URL(route,base),{...options,headers:{Authorization:'Bearer '+token,...options.headers},signal:AbortSignal.timeout(75000)});
