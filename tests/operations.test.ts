@@ -62,10 +62,18 @@ test('Notion ambiguous delivery is retained for reconciliation, never blindly re
 });
 test('source retrieval rejects path traversal and credential files before network access',async()=>{
  const fn=(async()=>{throw new Error('network must not be used');}) as typeof fetch;
- for(const path of ['../package.json','.env.local','secrets.json','.git/config','src/token.ts']) await assert.rejects(()=>readSource('lessonplantogo',path,fn),/not allowed|Unsupported/);
+ for(const path of ['../package.json','.env.local','.private/config.json','secrets.json','.git/config','src/token.ts']) await assert.rejects(()=>readSource('lessonplantogo',path,fn),/not allowed|Unsupported/);
 });
 test('reports remove common credentials, email addresses and local roots',()=>{
  const output=redact('ghp_abcdefghijklmnopqrstuvwxy me@example.com C:/Users/person/test password=private');
  assert.ok(!output.includes('ghp_'));assert.ok(!output.includes('me@example.com'));assert.ok(!output.includes('C:/Users'));assert.ok(!output.includes('password=private'));
 });
 test('exactly fifteen scoped specialist roles and eleven allowlisted projects',()=>{assert.equal(agents.length,15);assert.equal(new Set(agents.map(x=>x[0])).size,15);assert.equal(projects.length,11);});
+test('verified Notion receipts are owner-only and conflicting receipts are rejected',async()=>{
+ const storage=new Memory();await runCycle(storage,(async()=>new Response('')) as typeof fetch,now);
+ process.env.OPS_ADMIN_TOKEN='a'.repeat(48);const id=storage.state.reports[0].id;
+ const send=(pageId:string)=>handle(new Request('https://example.com/ops/report-receipt',{method:'POST',headers:{Authorization:'Bearer '+process.env.OPS_ADMIN_TOKEN},body:JSON.stringify({reportId:id,pageId})}),()=>storage);
+ assert.equal((await send('12345678-1234-4234-8234-123456789012')).status,200);
+ assert.equal(storage.state.reports[0].notion.status,'sent');
+ assert.equal((await send('22345678-1234-4234-8234-123456789012')).status,503);
+});

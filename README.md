@@ -53,6 +53,7 @@ See [Deployment](docs/DEPLOYMENT.md), [Operations](docs/OPERATIONS.md), [Command
 | `GET /ops/reports?after=N` | Owner bearer | Paginated immutable reports |
 | `POST /ops/deck-snapshot` | Signed relay | Fresh non-production observations |
 | `POST /ops/proposals` | Owner bearer | Review-only proposal; no source changes |
+| `POST /ops/report-receipt` | Owner bearer | Record a manually verified Notion receipt |
 | `/eve/v1/session…` | Owner bearer and paid-AI gate | Durable advisory sessions; disabled by default |
 
 ## Scope

@@ -49,6 +49,11 @@ export async function handle(request:Request, storageFactory:()=>Store=store):Pr
    const task=await storage.transact(state=>{const task={id:crypto.randomUUID(),projectId:p.id,owner:p.owner,kind:'proposal' as const,status:'needs_review' as const,title:redact(input.title),proposal:redact(input.proposal),evidence:input.evidence.map(redact),createdAt:new Date().toISOString()};state.tasks.push(task);report(state,'Proposal: '+task.title,'# Proposed change\n\n'+task.proposal+'\n\nEvidence:\n'+task.evidence.map(x=>'- '+x).join('\n')+'\n\nReview required. No code, deployment, schema or production setting was changed.',p.id);return task;});
    return json(task,201);
   }
+  if(path==='/ops/report-receipt'&&request.method==='POST') {
+   const input=z.object({reportId:z.uuid(),pageId:z.uuid()}).parse(JSON.parse(await body(request)));
+   await storage.transact(state=>{const item=state.reports.find(r=>r.id===input.reportId);if(!item)throw new Error('Unknown report');if(item.notion.status==='sent'&&item.notion.pageId!==input.pageId)throw new Error('Conflicting receipt');item.notion={status:'sent',pageId:input.pageId};});
+   return json({recorded:true});
+  }
   return json({error:'Route not found'},404);
  }catch(error) {
   if(error instanceof z.ZodError||error instanceof SyntaxError) return json({error:'Invalid request body'},400);

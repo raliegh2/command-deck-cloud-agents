@@ -7,4 +7,5 @@ export default defineChannel({routes:[
  POST('/ops/monitor',request=>handle(request)),
  POST('/ops/deck-snapshot',request=>handle(request)),
  POST('/ops/proposals',request=>handle(request)),
+ POST('/ops/report-receipt',request=>handle(request)),
 ]});
